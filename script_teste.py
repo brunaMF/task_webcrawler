@@ -67,7 +67,7 @@ class Crawler(object):
         print(self.df)
         pass
 
-def options():
+def options(option_url):
     option = int(input(''' Escolha dentre as opções:
     1. print
     2. salvar como csv
@@ -75,24 +75,33 @@ def options():
     4. sair
     Opção: '''))
     
-    if option == 1:
+    if option == 1 and option_url==1:
         c1.print()
+    elif option == 1 and option_url==2:
         c2.print()
-    elif option == 2:
+    elif option == 2 and option_url==1:
         c1.save_csv('1')
+    elif option == 2 and option_url==2:
         c2.save_csv('2')
-    elif option == 3:
+    elif option == 3 and option_url==1:
         c1.save_json('1')
+    elif option == 3 and option_url==2:
         c2.save_json('2')
     elif option == 4:
         exit()
 
 
 if __name__ == "__main__":
-    c1 = Crawler(url1)
-    c1.crawler_run()
+    option_url = int(input(f''' Escolha dentre as opções:
+    1. url 1: {url1} 
+    2. url 2: {url2}
+    Opção: '''))
 
-    c2 = Crawler(url2)
-    c2.crawler_run()
+    if option_url == 1:
+        c1 = Crawler(url1)
+        c1.crawler_run()
+    elif option_url == 2:
+        c2 = Crawler(url2)
+        c2.crawler_run()
     
-    options()
+    options(option_url)
