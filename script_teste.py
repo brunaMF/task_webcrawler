@@ -1,65 +1,148 @@
 import requests
-import numpy as np
 from bs4 import BeautifulSoup
-import csv
 import pandas as pd
+import re
+
+url1 = 'https://www.hostgator.com/vps-hosting'
+url2 = 'https://www.vultr.com/products/bare-metal/'
+
+class Crawler(object):
+    """Crawler pai"""
+
+    def __init__(self):
+        self.df = None
+        self.dict_from_list = {}
+        self.key_list = ['STORAGE/SSD DISK','CPU/VCPU', 'MEMORY/RAM','BANDWITDH/Dedicated IP','PRICE [$/mo]']
+        self.list_price = []
+        self.list_all = []
+        self.new_list = [[] for i in range(5)]
+
+    def crawler_run(self):
+        pass
+
+    def save_json(self,number):
+        self.df.to_json(f'table_data_{number}.json', orient='index')
+
+    def save_csv(self,number):
+        self.df.to_csv(f'table_data_{number}.csv', index=False)
+
+    def print(self):
+        print(self.df)
+        pass
 
 
-site1 = 'https://www.vultr.com/pricing/#cloud-compute'
-site2 = 'https://www.vultr.com/products/bare-metal/'
+class Crawler1(Crawler):
+    """Crawler filho 1"""
 
-response = requests.get(site2)
+    def crawler_run(self):
+        response = requests.get(url1)
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-#print(response.status_code)
+        table = soup.find('section', class_= 'pricing-card-container false undefined')
 
-soup = BeautifulSoup(response.text, 'html.parser')
+        i=0
+        for price in table.find_all('p', class_ = 'pricing-card-price'):
+            self.list_price.append(price.text.strip())
 
-table = soup.find('div', attrs={'class': 'row row--eq-height packages'})
-
-key_list = ['STORAGE/SSD DISK','CPU/VCPU', 'MEMORY/RAM','BANDWITDH/Dedicated IP','PRICE [$/mo]']
-key_list2 = ['intel1', 'intel2', 'intel3', 'intel4']
-i=0
-
-list_price = []
-list_all = []
-
-for price in table.find_all('span', class_ = 'price__value'):
-    list_price.append(price.text.strip())
-
-for item in table.find_all('li', attrs={'class': 'package__list-item'}):
-    if item.text.count("Network") == 0:
-        list_all.append(item.text.strip()) 
+        for item in table.find_all('li', class_= 'pricing-card-list-items'):
+            self.list_all.append(item.text.strip()) 
+            
+            if item.text.count("bandwidth") == 1:
+                self.list_all.append(self.list_price[i])
+                i+=1
         
-    if item.text.count("Bandwidth") == 1:
-        list_all.append(list_price[i])
-        i+=1
+
+
+        self.list_all = [re.sub(r'Â|\*', '',x) for x in self.list_all]
+
+        for i in range(len(self.list_all)): #ordenando e fazendo uma lista de lista
+            if i%5 == 0:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 1:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 2:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 3:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 4: 
+                self.new_list[i%5].append(self.list_all[i])
+
+        self.dict_from_list = dict(zip(self.key_list, self.new_list))
+
+        self.df = pd.DataFrame.from_dict(self.dict_from_list)
+        
+
+
+class Crawler2(Crawler):
+    """Crawler filho 2"""
+
+    def crawler_run(self):
+        response = requests.get(url2)
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        table = soup.find('div', class_= 'row row--eq-height packages')
+
+        i=0
+
+        for price in table.find_all('span', class_ = 'price__value'):
+            self.list_price.append(price.text.strip())
+
+        for item in table.find_all('li', class_= 'package__list-item'):
+            if item.text.count("Network") == 0:
+                self.list_all.append(item.text.strip()) 
+                
+            if item.text.count("Bandwidth") == 1:
+                self.list_all.append(self.list_price[i])
+                i+=1
+
+        self.list_all[15] = self.list_all[15]+' / '+self.list_all[16] #esse campo na tabela contém dois valores
+        del(self.list_all[16])
+
+        self.list_all = [re.sub(r'\t|\n', '',x) for x in self.list_all]
+
+        for i in range(len(self.list_all)): #ordenando e fazendo uma lista de lista
+            if i%5 == 0:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 1:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 2:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 3:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 4: 
+                self.new_list[i%5].append(self.list_all[i])
+
+        self.dict_from_list = dict(zip(self.key_list, self.new_list))
+
+        self.df = pd.DataFrame.from_dict(self.dict_from_list)    
+
+
+def options():
+    option = int(input(''' Escolha dentre as opções:
+    1. print
+    2. salvar como csv
+    3. salvar como json 
+    4. sair
+    Escolha: '''))
     
-    #print(item.text.strip())
-
-list_all[15] = list_all[15]+' / '+list_all[16] #esse campo na tabela contém dois valores
-del(list_all[16])
-
-list_all = [x.replace('\t', '') for x in list_all]
-list_all = [x.replace('\n','') for x in list_all]
-
-nova_lista = [[] for i in range(5)]
-
-for i in range(len(list_all)): #ordenando e fazendo uma lista de lista
-    if i%5 == 0:
-        nova_lista[i%5].append(list_all[i])
-    elif i%5 == 1:
-        nova_lista[i%5].append(list_all[i])
-    elif i%5 == 2:
-        nova_lista[i%5].append(list_all[i])
-    elif i%5 == 3:
-        nova_lista[i%5].append(list_all[i])
-    elif i%5 == 4: 
-        nova_lista[i%5].append(list_all[i])
-
-dict_from_list = dict(zip(key_list, nova_lista))
-
-df = pd.DataFrame.from_dict(dict_from_list)
-df.to_csv('table_data.csv', index=False)
-df.to_json('table_data.json', orient='index')
+    if option == 1:
+        c1.print()
+        c2.print()
+    elif option == 2:
+        c1.save_csv('1')
+        c2.save_csv('2')
+    elif option == 3:
+        c1.save_json('1')
+        c2.save_json('2')
+    elif option == 4:
+        exit()
 
 
+if __name__ == "__main__":
+    c1 = Crawler1()
+    c1.crawler_run()
+
+    c2 = Crawler2()
+    c2.crawler_run()
+    
+    options()
