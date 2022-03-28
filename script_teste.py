@@ -7,15 +7,15 @@ url1 = 'https://www.hostgator.com/vps-hosting'
 url2 = 'https://www.vultr.com/products/bare-metal/'
 
 class Crawler(object):
-    """Crawler pai"""
 
-    def __init__(self):
+    def __init__(self,url):
         self.df = None
         self.dict_from_list = {}
         self.key_list = ['STORAGE/SSD DISK','CPU/VCPU', 'MEMORY/RAM','BANDWITDH/Dedicated IP','PRICE [$/mo]']
         self.list_price = []
         self.list_all = []
         self.new_list = [[] for i in range(5)]
+        self.url = url
 
     def sort_data(self):
         [self.new_list[i%5].append(self.list_all[i]) for i in range(len(self.list_all))]
@@ -26,7 +26,36 @@ class Crawler(object):
         self.df = pd.DataFrame.from_dict(self.dict_from_list)
 
     def crawler_run(self):
-        pass
+        response = requests.get(self.url)
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        table = soup.find(re.compile("(section|div)"), class_= re.compile("(pricing-card-container false undefined|row row--eq-height packages)"))
+
+        i=0
+        
+        [self.list_price.append(price.text.strip()) for price in table.find_all(re.compile("(p|span)"), class_ = re.compile("price"))]
+
+        for item in table.find_all('li', class_= re.compile("(pricing-card-list-items|package__list-item)")):
+            if item.text.count("Network") == 0:
+                self.list_all.append(item.text.strip()) 
+                
+            if item.text.lower().count("bandwidth") == 1:
+                self.list_all.append(self.list_price[i])
+                i+=1
+
+            if self.url.count('vps-hosting') and item.text.count('SSD') == 1: #é feita uma troca para a ordenação ser a mesma nos dois crawlers
+                posicao = max(idx for idx, val in enumerate(self.list_all))
+                aux = self.list_all[posicao]
+                self.list_all[posicao] = self.list_all[posicao-2] 
+                self.list_all[posicao-2] = aux
+
+        if self.url.count('bare-metal'):
+            self.list_all[15] = self.list_all[15]+' / '+self.list_all[16] #esse campo na tabela da url2 contém dois valores, por isso será unido os dois valores 
+            del(self.list_all[16])
+
+        self.list_all = [re.sub(r'\t|\n|Â|\*', '',x) for x in self.list_all] #elimando caracteres indesejados
+
+        self.create_df()  
 
     def save_json(self,number):
         self.df.to_json(f'table_data_{number}.json', orient='index')
@@ -37,64 +66,6 @@ class Crawler(object):
     def print(self):
         print(self.df)
         pass
-
-class Crawler1(Crawler):
-    """Crawler filho 1"""
-
-    def crawler_run(self):
-        response = requests.get(url1)
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        table = soup.find('section', class_= 'pricing-card-container false undefined')
-
-        i=0
-        [self.list_price.append(price.text.strip()) for price in table.find_all('p', class_ = 'pricing-card-price')]
-
-        for item in table.find_all('li', class_= 'pricing-card-list-items'):
-            self.list_all.append(item.text.strip()) 
-            
-            if item.text.count("bandwidth") == 1:
-                self.list_all.append(self.list_price[i])
-                i+=1
-
-            if item.text.count('SSD') == 1: #troca para a ordenação ser a mesma nos dois crawlers
-                posicao = max(idx for idx, val in enumerate(self.list_all))
-                aux = self.list_all[posicao]
-                self.list_all[posicao] = self.list_all[posicao-2] 
-                self.list_all[posicao-2] = aux
-
-        self.list_all = [re.sub(r'Â|\*', '',x) for x in self.list_all]
-
-        self.create_df()
-        
-class Crawler2(Crawler):
-    """Crawler filho 2"""
-
-    def crawler_run(self):
-        response = requests.get(url2)
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        table = soup.find('div', class_= 'row row--eq-height packages')
-
-        i=0
-
-        [self.list_price.append(price.text.strip()) for price in table.find_all('span', class_ = 'price__value')]
-
-        for item in table.find_all('li', class_= 'package__list-item'):
-            if item.text.count("Network") == 0:
-                self.list_all.append(item.text.strip()) 
-                
-            if item.text.count("Bandwidth") == 1:
-                self.list_all.append(self.list_price[i])
-                i+=1
-
-        self.list_all[15] = self.list_all[15]+' / '+self.list_all[16] #esse campo na tabela contém dois valores
-        del(self.list_all[16])
-
-        self.list_all = [re.sub(r'\t|\n', '',x) for x in self.list_all]
-
-        self.create_df()  
-
 
 def options():
     option = int(input(''' Escolha dentre as opções:
@@ -118,10 +89,10 @@ def options():
 
 
 if __name__ == "__main__":
-    c1 = Crawler1()
+    c1 = Crawler(url1)
     c1.crawler_run()
 
-    c2 = Crawler2()
+    c2 = Crawler(url2)
     c2.crawler_run()
     
     options()
