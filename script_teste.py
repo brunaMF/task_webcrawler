@@ -48,8 +48,7 @@ class Crawler1(Crawler):
         table = soup.find('section', class_= 'pricing-card-container false undefined')
 
         i=0
-        for price in table.find_all('p', class_ = 'pricing-card-price'):
-            self.list_price.append(price.text.strip())
+        [self.list_price.append(price.text.strip()) for price in table.find_all('p', class_ = 'pricing-card-price')]
 
         for item in table.find_all('li', class_= 'pricing-card-list-items'):
             self.list_all.append(item.text.strip()) 
@@ -66,12 +65,8 @@ class Crawler1(Crawler):
 
         self.list_all = [re.sub(r'Â|\*', '',x) for x in self.list_all]
 
-        #print(self.list_all)
-    
         self.create_df()
         
-
-
 class Crawler2(Crawler):
     """Crawler filho 2"""
 
@@ -83,8 +78,7 @@ class Crawler2(Crawler):
 
         i=0
 
-        for price in table.find_all('span', class_ = 'price__value'):
-            self.list_price.append(price.text.strip())
+        [self.list_price.append(price.text.strip()) for price in table.find_all('span', class_ = 'price__value')]
 
         for item in table.find_all('li', class_= 'package__list-item'):
             if item.text.count("Network") == 0:
