@@ -17,6 +17,24 @@ class Crawler(object):
         self.list_all = []
         self.new_list = [[] for i in range(5)]
 
+    def sort_data(self):
+        for i in range(len(self.list_all)): #ordenando e fazendo uma lista de lista
+            if i%5 == 0:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 1:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 2:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 3:
+                self.new_list[i%5].append(self.list_all[i])
+            elif i%5 == 4: 
+                self.new_list[i%5].append(self.list_all[i])
+
+    def create_df(self):
+        self.sort_data()
+        self.dict_from_list = dict(zip(self.key_list, self.new_list))
+        self.df = pd.DataFrame.from_dict(self.dict_from_list)
+
     def crawler_run(self):
         pass
 
@@ -29,7 +47,6 @@ class Crawler(object):
     def print(self):
         print(self.df)
         pass
-
 
 class Crawler1(Crawler):
     """Crawler filho 1"""
@@ -50,26 +67,10 @@ class Crawler1(Crawler):
             if item.text.count("bandwidth") == 1:
                 self.list_all.append(self.list_price[i])
                 i+=1
-        
-
 
         self.list_all = [re.sub(r'Â|\*', '',x) for x in self.list_all]
 
-        for i in range(len(self.list_all)): #ordenando e fazendo uma lista de lista
-            if i%5 == 0:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 1:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 2:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 3:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 4: 
-                self.new_list[i%5].append(self.list_all[i])
-
-        self.dict_from_list = dict(zip(self.key_list, self.new_list))
-
-        self.df = pd.DataFrame.from_dict(self.dict_from_list)
+        self.create_df()
         
 
 
@@ -100,21 +101,7 @@ class Crawler2(Crawler):
 
         self.list_all = [re.sub(r'\t|\n', '',x) for x in self.list_all]
 
-        for i in range(len(self.list_all)): #ordenando e fazendo uma lista de lista
-            if i%5 == 0:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 1:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 2:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 3:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 4: 
-                self.new_list[i%5].append(self.list_all[i])
-
-        self.dict_from_list = dict(zip(self.key_list, self.new_list))
-
-        self.df = pd.DataFrame.from_dict(self.dict_from_list)    
+        self.create_df()  
 
 
 def options():
