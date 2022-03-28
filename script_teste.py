@@ -18,17 +18,7 @@ class Crawler(object):
         self.new_list = [[] for i in range(5)]
 
     def sort_data(self):
-        for i in range(len(self.list_all)): #ordenando e fazendo uma lista de lista
-            if i%5 == 0:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 1:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 2:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 3:
-                self.new_list[i%5].append(self.list_all[i])
-            elif i%5 == 4: 
-                self.new_list[i%5].append(self.list_all[i])
+        [self.new_list[i%5].append(self.list_all[i]) for i in range(len(self.list_all))]
 
     def create_df(self):
         self.sort_data()
@@ -68,8 +58,16 @@ class Crawler1(Crawler):
                 self.list_all.append(self.list_price[i])
                 i+=1
 
+            if item.text.count('SSD') == 1: #troca para a ordenação ser a mesma nos dois crawlers
+                posicao = max(idx for idx, val in enumerate(self.list_all))
+                aux = self.list_all[posicao]
+                self.list_all[posicao] = self.list_all[posicao-2] 
+                self.list_all[posicao-2] = aux
+
         self.list_all = [re.sub(r'Â|\*', '',x) for x in self.list_all]
 
+        #print(self.list_all)
+    
         self.create_df()
         
 
@@ -110,7 +108,7 @@ def options():
     2. salvar como csv
     3. salvar como json 
     4. sair
-    Escolha: '''))
+    Opção: '''))
     
     if option == 1:
         c1.print()
